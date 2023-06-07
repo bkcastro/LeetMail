@@ -36,3 +36,12 @@ body {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+
+.text-pink {
+  color: pink;
+}
+
+.google-color {
+  background-color: rgb(207, 55, 80);
+  color: white;
+}

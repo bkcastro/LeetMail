@@ -1,0 +1,33 @@
+<%- include("partials/header") -%>
+
+<body class="text-center">
+<main class="form-signin w-100 m-auto">
+
+  <form action="/register"  method="POST">
+    <img class="mb-4" src="images/leetCode.png" alt="" >
+    <h1 class="h3 mb-3 fw-normal text-dark">Create an account!</h1>
+    <p class="">CodeMail helps people stay on the grind by sending them unique leetcode questions via email. </p>
+
+    <p class="text-danger"><%=errorMessage%></p>
+    <div class="form-floating">
+        <input type="text" name="username" class="form-control top" id="username" placeholder="Username" required>
+        <label for="username">Username</label>
+      </div>
+      <div class="form-floating">
+        <input type="text" name="password" class="form-control top" id="password" placeholder="Password" required>
+        <label for="password">New Password</label>
+      </div>
+    <div class="form-floating bottom">
+      <input type="email" name="email" class="form-control" id="email" placeholder="name@example.com" required>
+      <label for="email">Email address</label>
+    </div>
+    
+    <button class="w-100 btn btn-lg btn-warning" type="submit">Sign Up</button>
+    <p class="mt-5 mb-3 text-muted">&copy; CodeMail Co</p>
+  </form>
+
+</main>
+</body>
+
+<%- include("partials/footer") -%>
+    

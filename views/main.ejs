@@ -1,0 +1,67 @@
+<%- include("partials/header") -%>
+
+<body class="text-center">
+<main class="form-signin w-100 m-auto">
+
+  <form action="/update"  method="POST">
+    <img class="mb-4" src="images/leetCode.png" alt="" >
+    <input type="hidden" name="userEmail" value="<%= userEmail %>">
+    <h1 class="h3 mb-3 fw-normal text-dark">Welcome <%=userName%></h1>
+    <p class="">Toggle which days you want CodeMail to send you a random <code>LeetCode</code> question.</p>
+
+    <p class="">Current Status: <%=currentStatus%></p>
+    <% const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
+    <% for (let i = 0; i < daysOfWeek.length; i++) { %>
+      
+      <% if (schedule[i]) { %>
+          <input name="days" onclick="clicked(this)" type="checkbox" checked="true" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
+        <% } else { %>
+          <input name="days" onclick="clicked(this)" type="checkbox" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
+        <% } %>
+
+        <label id="label+<%= i %>" class="daysOfWeek mb-2 btn btn-outline-warning" for="<%= i %>"><%= daysOfWeek[i] %></label>
+    <% } %>
+    
+
+    <div> 
+      <p>Difficulty:</p>
+      <% const difficultys = ['easy', 'medium', 'hard']; %>
+      <% const colors = ['success', 'warning', 'danger'] %>
+      <% for (let i = 0; i < difficultys.length; i++) { %>
+        
+        <% if (diffs[i]) { %>
+          <input name="diffs" checked="true" onclick="clicked(this)" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
+        <% } else { %>
+          <input name="diffs" onclick="clicked(this)" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
+        <% } %>
+        <label class=" mb-3 btn rounded-pill btn-outline-<%= colors[i] %>" for="<%= i+7 %>" id="<%= i+7 %>"><%= difficultys[i] %></label>
+      <% } %>
+    </div>
+
+    <button id="update" class="w-100 btn btn-lg btn-outline-warning" type="submit" disabled>Update</button>
+  </form>
+
+  <form class="mt-1" action="/SignOut" method="POST">
+    <button id="singout" class="w-100 btn btn-lg btn-danger" type="submit">Sign Out</button>
+  </form>
+  <p class="mt-5 mb-3 text-muted">&copy; CodeMail Co</p>
+
+  <script>
+
+    function clicked(element) {
+
+      var button = document.getElementById("update"); 
+      if (!button.classList.contains("active")) {
+        button.classList.add("active");
+        button.disabled  =  false;
+      } 
+
+    };
+
+  </script>
+
+</main>
+
+</body>
+
+<%- include("partials/footer") -%>

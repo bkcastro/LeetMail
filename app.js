@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const nodemailer = require("nodemailer");
 const cron =  require("node-cron");
 const LeetCode = require("leetcode-query");
+const bcrypt = require('bcrypt');
 
 let leet = new LeetCode.LeetCode(); 
 
@@ -14,26 +15,33 @@ let hardQuestions = [];
 process.env.TZ = 'America/Los_Angeles';
 
 const mongoose = require("mongoose");
+const { errorMonitor } = require("nodemailer/lib/xoauth2");
 var url = 'mongodb+srv://c1brandon626:test123@cluster0.zi9jqhj.mongodb.net/codeMail';
 
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true }, 
-    subs: {type: Boolean, required: true },
-    schedule: { type: [Boolean], required: true },
-    diffs: { type: Array, required: true },
+const userProblemSchema = new mongoose.Schema({
+    user: { type: String, required: true }, 
     easy: { type: Array, required: true },
     medium: { type: Array, required: true },
     hard: { type: Array, required: true }
 });
 
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true },
+    email: { type: String, required: true }, 
+    password: { type: String, required: true },
+    status: {type: Boolean, required: true },
+    schedule: { type: [Boolean], required: true },
+    diffs: { type: Array, required: true }
+});
+
 const problemSchema = new mongoose.Schema({
     difficulty: { type: String,  required: true },
     list: { type: Array, default: [] }
-})
+});
 
 const User = mongoose.model("User", userSchema)
 const Problem = mongoose.model("problem", problemSchema);
+const UserProblems = mongoose.model("userproblems", userProblemSchema);
 
 let mailTransporter = nodemailer.createTransport({
     service: 'gmail',
@@ -99,9 +107,9 @@ async function addUser(data) {
 
         // Create user. 
         const newUser = new User({
-            name: data.fName,
+            username: data.username,
             email: data.email,
-            subs: true,
+            status: true,
             schedule: temp, 
             diffs: data.diffs, 
             easy: Array.from(Array(easyQuestions.length).keys()).map(x => x), 
@@ -139,33 +147,165 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
 app.get("/", function(req, res) {
-    res.render("signup", {errorMessage: ""});
+    res.render("login", {errorMessage:""});
 });
 
-app.get("/deleteAccount", function(req, res){
-    res.render("deleteAccount");
+app.get("/main", function(req, res) {
+    res.render("main", {userEmail: "c1brandon626@gmail.com", currentStatus: "Active", userName: "liljGremlin", schedule: [true, true, true, true, true, false, false ] , diffs: [ true, false, true ] });
+});
+
+app.get("/register", function(req, res) {
+    res.render("register", {errorMessage: ""});
+});
+
+app.get("/forgotpassword", function(req, res) {
+    res.render("forgotpassword"); 
 })
+  
+app.post("/login", async (req, res) => { 
+    // Check if username exist else print error 
+    try {
+        const user = await User.findOne({email: req.body.email});
 
-app.get("/deleteSuccess", function(req, res){
-    res.render("deleteSuccess");
-})
-
-app.post("/", function(req, res) {
-
-    if (req.body.days == undefined || req.body.diffs == undefined)
-    {
-       res.render("signup", {errorMessage: "Please pick at least one from each section"});
-    } else 
-    {
-        // add the new user or update his schedule. 
-        addUser(req.body);
+        if (user ==  null) {
+            res.render("login", {errorMessage: "Email not registered with an acount."});
+        } else 
+        {
+            bcrypt.compare(req.body.password, user.password, function(err,  result){
+                if (err){
+                    res.render("login", {errorMessage: "Error occurred try again later."});
+                }  else if (result) {
+                    var userStatusString = "Active"; 
+                    
+                    if (!user.status) {
+                        userStatusString = "Not Active";
+                    }
+                   
+                    res.render("main", {userEmail: user.email, currentStatus: userStatusString, userName: user.username, schedule: user.schedule, diffs:  user.diffs });
+                }  else 
+                {
+                    res.render("login", {errorMessage: "Email or password do not match."});
+                }
+            });
+        }
+    } catch {
+        res.redirect('/');
     }
 
-    res.render("success", {message: "Success!"}); 
 });
 
-app.post("/failure", function(req, res){
-    res.redirect("/");
+app.post("/register", async (req, res) => {
+    // check if user is already created: check email. 
+    // create new user 
+   
+    try {
+        // Check if email is in the database if so then email cannot greate new user
+        const user = await User.findOne({email: req.body.email});  
+    
+        if (user == null)
+        {
+            const hashedPassword = await bcrypt.hash(req.body.password, 10); 
+
+             // Create user. 
+            const newUser = new User({
+                username: req.body.username,
+                email: req.body.email,
+                password: hashedPassword,
+                status: false,
+                schedule: [], 
+                diffs: []
+            }); 
+
+            const userProbs = new UserProblems({
+                user: newUser.id,
+                easy: easyQuestions,
+                medium: mediumQuestions, 
+                hard: hardQuestions
+            });
+
+            await newUser.save();
+            await userProbs.save();
+
+            sendMail(req.body.email, req.body.username);
+
+            console.log("User Created");
+        
+            res.redirect('/');
+        } else 
+        {
+            console.log("user already exists");
+            res.render('register', {errorMessage: "That email already has an account"});
+        }
+
+    } catch {
+        res.redirect('/');
+    } 
+});
+
+app.post("/update", async( req, res) => {
+    /*
+    try {
+        
+        const user = await User.findOneAndUpdate(
+            
+          { days: booleanDays},
+          { diffs: booleanDiffs}
+        );
+
+        let status = "Deactive";
+
+        if (user.status) {
+            status = "Active"
+        }
+    
+        res.redirect("/main", {userEmail: user.email, userName: user.username, currentStatus: status, schedule: user.days, diffs: user.diffs });
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to update user' });
+      }
+      */
+
+    try {
+        const user = await User.findOne({email: req.body.userEmail});
+
+        if (user ==  null) {
+            res.render("login", {errorMessage: "Email not registered with an acount."});
+        } else 
+        {
+            console.log(req.body)
+
+            let booleanDays = [false, false, false, false, false, false, false]; 
+
+            for (let i = 0; i < req.body.days.length; i++)
+            {
+                booleanDays[parseInt(req.body.days[i])] = true; 
+            }
+
+            let booleanDiffs = [false, false, false]; 
+
+            for  (let i = 0; i < req.body.diffs.length; i++)
+            {
+                booleanDiffs[parseInt(req.body.diffs[i])] = true; 
+            }
+
+            if (user.days != booleanDays) {
+                // Update
+            }
+
+            if (user.diffs != booleanDiffs) {
+                // Update
+            }
+
+            console.log(booleanDays); 
+            console.log(booleanDiffs);
+            res.render("main", {userEmail: "c1brandon626@gmail.com", currentStatus: "Active", userName: "liljGremlin", schedule: [true, true, true, true, true, false, false ] , diffs: [ true, false, true ] });
+        }
+    } catch {
+        res.redirect('/');
+    }
+});
+
+app.post("/SignOut", async(req, res)  => {
+    res.redirect('/');
 });
 
 const temp = async() => {
@@ -197,7 +337,7 @@ const temp = async() => {
         userOne.save(); 
         userTwo.save();
 
-}
+};
 
 
 function getRandomQuestions(user, diff) {
@@ -210,7 +350,7 @@ function getRandomQuestions(user, diff) {
         break;
         default: return Math.floor(Math.random()*user.hard.length); 
     }
-}
+};
 
 async function updateUserQuestions(u, index, diffsIndex) {
 
@@ -229,7 +369,7 @@ async function updateUserQuestions(u, index, diffsIndex) {
     }
 
     console.log("User with email: "+u.email+" db was updated.");
-}
+};
 
 
 const sendQuestionsToUsers = async() => {
@@ -295,7 +435,7 @@ const sendQuestionsToUsers = async() => {
             });
         }
     })
-}
+};
 
 const setCron = async() => {
     cron.schedule('* * * * * ', () => {
@@ -312,16 +452,15 @@ const start = async() => {
 
         await mongoose.connect(url);
         
-        easy = await Problem.findOne({difficulty: "easy"}).exec();
-        medium = await Problem.findOne({difficulty: "medium"}).exec();
-        hard = await Problem.findOne({difficulty: "hard"}).exec();
+        // easy = await Problem.findOne({difficulty: "easy"}).exec();
+        // medium = await Problem.findOne({difficulty: "medium"}).exec();
+        // hard = await Problem.findOne({difficulty: "hard"}).exec();
 
-        easyQuestions = easy.list; 
-        mediumQuestions = medium.list; 
-        hardQuestions = hard.list; 
+        // easyQuestions = easy.list; 
+        // mediumQuestions = medium.list; 
+        // hardQuestions = hard.list; 
 
-        setCron(); 
-
+        //setCron(); 
 
         app.listen(3000, function() {
             console.log("Server running on port 3000");
