@@ -25,6 +25,7 @@
 
     <div> 
       <p>Difficulty:</p>
+      <p class="text-danger error"><%=errorMessage%></p>
       <% const difficultys = ['easy', 'medium', 'hard']; %>
       <% const colors = ['success', 'warning', 'danger'] %>
       <% for (let i = 0; i < difficultys.length; i++) { %>

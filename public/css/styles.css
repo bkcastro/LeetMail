@@ -3,6 +3,10 @@ body {
   height: 100%;
 }
 
+.error {
+  font-weight: 700;
+}
+
 body {
   display: flex;
   align-items: center;

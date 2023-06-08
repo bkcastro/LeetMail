@@ -29,9 +29,9 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true }, 
     password: { type: String, required: true },
-    status: {type: Boolean, required: true },
-    schedule: { type: [Boolean], required: true },
-    diffs: { type: Array, required: true }
+    status: {type: String, required: true },
+    schedule: { type: Array },
+    diffs: { type: Array }
 });
 
 const problemSchema = new mongoose.Schema({
@@ -150,10 +150,6 @@ app.get("/", function(req, res) {
     res.render("login", {errorMessage:""});
 });
 
-app.get("/main", function(req, res) {
-    res.render("main", {userEmail: "c1brandon626@gmail.com", currentStatus: "Active", userName: "liljGremlin", schedule: [true, true, true, true, true, false, false ] , diffs: [ true, false, true ] });
-});
-
 app.get("/register", function(req, res) {
     res.render("register", {errorMessage: ""});
 });
@@ -175,13 +171,8 @@ app.post("/login", async (req, res) => {
                 if (err){
                     res.render("login", {errorMessage: "Error occurred try again later."});
                 }  else if (result) {
-                    var userStatusString = "Active"; 
-                    
-                    if (!user.status) {
-                        userStatusString = "Not Active";
-                    }
-                   
-                    res.render("main", {userEmail: user.email, currentStatus: userStatusString, userName: user.username, schedule: user.schedule, diffs:  user.diffs });
+                
+                    res.render("main", {userEmail: user.email, errorMessage: "", currentStatus: user.status, userName: user.username, schedule: user.schedule, diffs:  user.diffs });
                 }  else 
                 {
                     res.render("login", {errorMessage: "Email or password do not match."});
@@ -211,9 +202,9 @@ app.post("/register", async (req, res) => {
                 username: req.body.username,
                 email: req.body.email,
                 password: hashedPassword,
-                status: false,
-                schedule: [], 
-                diffs: []
+                status: "Not Active",
+                schedule: [false, false, false, false, false, false, false], 
+                diffs: [false, false, false]
             }); 
 
             const userProbs = new UserProblems({
@@ -243,63 +234,52 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/update", async( req, res) => {
-    /*
-    try {
-        
-        const user = await User.findOneAndUpdate(
-            
-          { days: booleanDays},
-          { diffs: booleanDiffs}
-        );
-
-        let status = "Deactive";
-
-        if (user.status) {
-            status = "Active"
-        }
-    
-        res.redirect("/main", {userEmail: user.email, userName: user.username, currentStatus: status, schedule: user.days, diffs: user.diffs });
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to update user' });
-      }
-      */
 
     try {
-        const user = await User.findOne({email: req.body.userEmail});
 
-        if (user ==  null) {
-            res.render("login", {errorMessage: "Email not registered with an acount."});
-        } else 
+        console.log("1");
+        console.log(req.body);
+
+        let booleanDays = [false, false, false, false, false, false, false]; 
+
+        for (let i = 0; i < req.body.days.length; i++)
         {
-            console.log(req.body)
+            booleanDays[parseInt(req.body.days[i])] = true; 
+        }
 
-            let booleanDays = [false, false, false, false, false, false, false]; 
+        let booleanDiffs = [false, false, false]; 
 
-            for (let i = 0; i < req.body.days.length; i++)
-            {
-                booleanDays[parseInt(req.body.days[i])] = true; 
-            }
-
-            let booleanDiffs = [false, false, false]; 
-
+        if (req.body.hasOwnProperty('diffs')) {
             for  (let i = 0; i < req.body.diffs.length; i++)
             {
                 booleanDiffs[parseInt(req.body.diffs[i])] = true; 
             }
-
-            if (user.days != booleanDays) {
-                // Update
-            }
-
-            if (user.diffs != booleanDiffs) {
-                // Update
-            }
-
-            console.log(booleanDays); 
-            console.log(booleanDiffs);
-            res.render("main", {userEmail: "c1brandon626@gmail.com", currentStatus: "Active", userName: "liljGremlin", schedule: [true, true, true, true, true, false, false ] , diffs: [ true, false, true ] });
         }
-    } catch {
+        
+        var userStatus = "Active"; 
+
+        if (booleanDays == [false, false, false, false, false, false, false]) {
+            userStatus = "Not Active";
+        }
+
+        console.log(booleanDays);
+        console.log(booleanDiffs);
+
+        console.log("2");
+        if (booleanDiffs == [false, false, false]) {
+            console.log("3");
+            res.render("main", {userEmail: req.body.userEmail, errorMessage: "Please pick a difficulty", currentStatus: userStatus, userName: req.body.userName, schedule: booleanDays , diffs: booleanDiffs } );
+        } else {
+            console.log("4");
+            const user = await User.findOneAndUpdate({email: req.body.userEmail}, { status: userStatus, schedule: booleanDays, diffs: booleanDiffs}); 
+
+            console.log(user); 
+
+            res.render("main", {userEmail: req.body.userEmail, errorMessage: "", currentStatus: userStatus, userName: req.body.userName, schedule: booleanDays , diffs: booleanDiffs } );
+        }
+        
+    } catch(error) {
+        console.log(error);
         res.redirect('/');
     }
 });
@@ -370,7 +350,6 @@ async function updateUserQuestions(u, index, diffsIndex) {
 
     console.log("User with email: "+u.email+" db was updated.");
 };
-
 
 const sendQuestionsToUsers = async() => {
     const users = await User.find().exec();
