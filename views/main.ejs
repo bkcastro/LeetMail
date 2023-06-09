@@ -7,23 +7,45 @@
     <img class="mb-4" src="images/leetCode.png" alt="" >
     <input type="hidden" name="userEmail" value="<%= userEmail %>">
     <h1 class="h3 mb-3 fw-normal text-dark">Welcome <%=userName%></h1>
-    <p class="">Toggle which days you want CodeMail to send you a random <code>LeetCode</code> question.</p>
+    <p>Toggle which days you want CodeMail to send you a random <code>LeetCode</code> question. Items with a <span class="strike-through">red</span> line going thought them don't work right now Sorry!</p>
 
-    <p class="">Current Status: <%=currentStatus%></p>
+    <p>Current Status: <%=currentStatus%></p>
+
+    <div class="d-flex justify-content-center mb-2">
+      <p class="spaceout p-1 strike-through">Time:</p>
+      <div class="dropdown">
+        <a id="dropdown" class="btn rounded-pill btn-outline-dark dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          10 am
+        </a>
+        <input id="time" name="time" hidden="true" value="">
+        <ul class="dropdown-menu">
+          <% for (let i=6; i < 12; i++) { %>
+          <li><a class="dropdown-item" onclick="toggleDropdown('<%= i %> am')" ><%= i %> am</a></li>
+          <% } %>
+          <li><a class="dropdown-item" onclick="toggleDropdown('12 pm')" >12 pm</a></li>
+          <% for (let i=1; i < 12; i++) { %>
+            <li><a class="dropdown-item" onclick="toggleDropdown('<%= i %> pm')" ><%= i %> pm</a></li>
+            <% } %>
+            <li><a class="dropdown-item" onclick="toggleDropdown('12 am')" >12 am</a></li>
+        </ul>
+      </div>
+    </div>
+
+    
     <% const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
     <% for (let i = 0; i < daysOfWeek.length; i++) { %>
       
       <% if (schedule[i]) { %>
-          <input name="days" onclick="clicked(this)" type="checkbox" checked="true" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
+          <input name="days" onclick="clicked()" type="checkbox" checked="true" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
         <% } else { %>
-          <input name="days" onclick="clicked(this)" type="checkbox" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
+          <input name="days" onclick="clicked()" type="checkbox" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
         <% } %>
 
         <label id="label+<%= i %>" class="daysOfWeek mb-2 btn btn-outline-warning" for="<%= i %>"><%= daysOfWeek[i] %></label>
     <% } %>
     
 
-    <div> 
+    <div class="mt-1"> 
       <p>Difficulty:</p>
       <p class="text-danger error"><%=errorMessage%></p>
       <% const difficultys = ['easy', 'medium', 'hard']; %>
@@ -31,12 +53,22 @@
       <% for (let i = 0; i < difficultys.length; i++) { %>
         
         <% if (diffs[i]) { %>
-          <input name="diffs" checked="true" onclick="clicked(this)" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
+          <input name="diffs" checked="true" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
         <% } else { %>
-          <input name="diffs" onclick="clicked(this)" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
+          <input name="diffs" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
         <% } %>
         <label class=" mb-3 btn rounded-pill btn-outline-<%= colors[i] %>" for="<%= i+7 %>" id="<%= i+7 %>"><%= difficultys[i] %></label>
       <% } %>
+    </div>
+
+    <p class="dropdown-toggle text-center strike-through" onclick="toggleOptions()">More Options</p>
+    <div id="options" hidden="true" class="mb-2">
+        <input name="option" onclick="" type="checkbox" class="btn-check" id="14" value="" autocomplete="off">
+        <label class=" mb-2 btn rounded-pill btn-outline-success" for="14">Array</label>
+        <input name="option" onclick="" type="checkbox" class="btn-check" id="22" value="" autocomplete="off">
+        <label class=" mb-2 btn rounded-pill btn-outline-success" for="22">String</label>
+        <input name="option" onclick="" type="checkbox" class="btn-check" id="33" value="" autocomplete="off">
+        <label class=" mb-2 btn rounded-pill btn-outline-success" for="33" id="">Hash Table</label>
     </div>
 
     <button id="update" class="w-100 btn btn-lg btn-outline-warning" type="submit" disabled>Update</button>
@@ -49,20 +81,39 @@
 
   <script>
 
-    function clicked(element) {
-
+    function clicked() {
       var button = document.getElementById("update"); 
       if (!button.classList.contains("active")) {
         button.classList.add("active");
         button.disabled  =  false;
       } 
+    };
 
+    function toggleDropdown(i) {
+      var elem = document.getElementById("dropdown")
+
+      if (elem.innerText != i) {
+        
+        //clicked();
+
+        elem.innerText = i; 
+        document.getElementById("time").value = i;
+        console.log(1);
+        
+        if (elem.classList.contains("btn-outline-dark")) {
+          elem.classList.remove("btn-outline-dark");
+          elem.classList.add("btn-primary");
+          console.log(2);
+        }
+      }
+    };
+
+    function toggleOptions() {
+      document.getElementById("options").toggleAttribute("hidden");
     };
 
   </script>
 
 </main>
-
-</body>
 
 <%- include("partials/footer") -%>

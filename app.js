@@ -146,6 +146,11 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
+app.get("/main", function(req, res) {
+    res.render("main", {userEmail: "test", errorMessage: "", currentStatus: "Active", userName: "test username", schedule: [false, false, false, false, false, false, false] , diffs: [false, false, false] } );
+        
+});
+
 app.get("/", function(req, res) {
     res.render("login", {errorMessage:""});
 });
@@ -237,9 +242,6 @@ app.post("/update", async( req, res) => {
 
     try {
 
-        console.log("1");
-        console.log(req.body);
-
         let booleanDays = [false, false, false, false, false, false, false]; 
 
         for (let i = 0; i < req.body.days.length; i++)
@@ -262,20 +264,13 @@ app.post("/update", async( req, res) => {
             userStatus = "Not Active";
         }
 
-        console.log(booleanDays);
-        console.log(booleanDiffs);
-
         console.log("2");
-        if (booleanDiffs == [false, false, false]) {
-            console.log("3");
+        if (booleanDiffs[0] == false && booleanDiffs[1] == false && booleanDiffs[2] == false) {
             res.render("main", {userEmail: req.body.userEmail, errorMessage: "Please pick a difficulty", currentStatus: userStatus, userName: req.body.userName, schedule: booleanDays , diffs: booleanDiffs } );
         } else {
-            console.log("4");
-            const user = await User.findOneAndUpdate({email: req.body.userEmail}, { status: userStatus, schedule: booleanDays, diffs: booleanDiffs}); 
+            const user = await User.findOneAndUpdate({email: req.body.userEmail}, { status: userStatus, schedule: booleanDays, diffs: booleanDiffs } ); 
 
-            console.log(user); 
-
-            res.render("main", {userEmail: req.body.userEmail, errorMessage: "", currentStatus: userStatus, userName: req.body.userName, schedule: booleanDays , diffs: booleanDiffs } );
+            res.render("main", {userEmail: user.email, errorMessage: "", currentStatus: userStatus, userName: user.username, schedule: booleanDays , diffs: booleanDiffs } );
         }
         
     } catch(error) {
