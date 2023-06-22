@@ -2,11 +2,11 @@
 
 <body class="text-center">
 <main class="form-signin w-100 m-auto">
+  <div id="canvas-container"></div>
 
   <form action="/register"  method="POST">
-    <img class="mb-4" src="images/leetCode.png" alt="" >
     <h1 class="h3 mb-3 fw-normal text-dark">Create an account!</h1>
-    <p class="">CodeMail helps people stay on the grind by sending them unique leetcode questions via email. </p>
+    <p class=""><b class="text-warning">CodeMail</b> helps people stay on the grind by sending them unique leetcode questions via email. </p>
 
     <p class="text-danger"><%=errorMessage%></p>
     <div class="form-floating">
@@ -28,5 +28,5 @@
 
 </main>
 
-<%- include("partials/footer") -%>
+<%- include("partials/threejsFooter") -%>
     

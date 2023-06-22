@@ -1,8 +1,8 @@
 <%- include("partials/header") -%>
 
 <body class="text-center">
-<div class="logo"></div>
 <main class="form-signin w-100 m-auto text-align">
+  <div id="canvas-container"></div>
   <form action="/login"  method="POST">
     
     <h1 class="h3 mb-3 fw-normal text-dark">Welcome to <b class="text-warning">CodeMail!</b></h1>
@@ -26,48 +26,6 @@
   <p class="mt-2"><a href="/forgotpassword" class="text-danger">Forgot Password?</a></p>
   <p class="mt-5 text-muted">&copy; CodeMail Co</p>
 </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
-  <script>
-    // Set up the scene, camera, and renderer
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    renderer.setClearColor(0x595959); // Set to blue color
 
-    const light = new THREE.AmbientLight( 0x404040 ); // soft white light
-    scene.add( light );
-
-
-    // Position the camera
-    camera.position.z = 5;
-    camera.position.y = -2
-
-    const loader = new THREE.GLTFLoader();
-
-    // Load the GLB object
-    loader.load('models/leetCode.glb', function (gltf) {
-      // The GLB object is loaded successfully
-      const object = gltf.scene;
-      object.scale.set(0.3, 0.3, 0.3);
-      
-      // Add the object to the scene
-      scene.add(object);
-      
-      // You can manipulate the object as needed
-      object.rotation.x = Math.PI / 2;
-
-      // Render the scene
-      function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-        object.rotation.z += 0.001
-      }
-      animate();
-    });
-  </script>
-
-<%- include("partials/footer") -%>
+<%- include("partials/threejsFooter") -%>
     

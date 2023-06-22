@@ -2,17 +2,22 @@
 
 <body class="text-center">
 <main class="form-signin w-100 m-auto">
-
+  <div id="canvas-container"></div>
   <form action="/update"  method="POST">
-    <img class="mb-4" src="images/leetCode.png" alt="" >
     <input type="hidden" name="userEmail" value="<%= userEmail %>">
-    <h1 class="h3 mb-3 fw-normal text-dark">Welcome <%=userName%></h1>
-    <p>Toggle which days you want CodeMail to send you a random <code>LeetCode</code> question. Items with a <span class="strike-through">red</span> line going thought them don't work right now Sorry!</p>
+    <h1 class="h3 mb-3 fw-normal text-dark">Welcome <span class="text-warning"><%= userName %></span></h1>
+    <p>Toggle which days you want <b class="text-warning">CodeMail</b> to send you a random <code>LeetCode</code> question. Items with a <span class="strike-through">red</span> line going through them don't work right now Sorry!</p>
 
-    <p>Current Status: <%=currentStatus%></p>
+    <p>Current Status: 
+      <% if (currentStatus == "Active") { %> 
+        <span class="badge bg-success-subtle text-success-emphasis rounded-pill"><%= currentStatus %></span>
+      <% } else { %> 
+        <span class="badge bg-dark-subtle text-dark-emphasis rounded-pill"><%= currentStatus %></span>
+      <% } %>
+    </p>
 
     <div class="d-flex justify-content-center mb-2">
-      <p class="spaceout p-1 strike-through">Time:</p>
+      <p class="spaceout p-1 strike-through">Time (PDT):</p>
       <div class="dropdown">
         <a id="dropdown" class="btn rounded-pill btn-outline-dark dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
           10 am
@@ -31,7 +36,6 @@
       </div>
     </div>
 
-    
     <% const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
     <% for (let i = 0; i < daysOfWeek.length; i++) { %>
       
@@ -43,7 +47,6 @@
 
         <label id="label+<%= i %>" class="daysOfWeek mb-2 btn btn-outline-warning" for="<%= i %>"><%= daysOfWeek[i] %></label>
     <% } %>
-    
 
     <div class="mt-1"> 
       <p>Difficulty:</p>
@@ -57,18 +60,17 @@
         <% } else { %>
           <input name="diffs" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
         <% } %>
-        <label class=" mb-3 btn rounded-pill btn-outline-<%= colors[i] %>" for="<%= i+7 %>" id="<%= i+7 %>"><%= difficultys[i] %></label>
+        <label class=" mb-3 btn rounded-pill btn-outline-<%= colors[i] %>" for="<%= i+7 %>"><%= difficultys[i] %></label>
       <% } %>
     </div>
 
     <p class="dropdown-toggle text-center strike-through" onclick="toggleOptions()">More Options</p>
     <div id="options" hidden="true" class="mb-2">
-        <input name="option" onclick="" type="checkbox" class="btn-check" id="14" value="" autocomplete="off">
-        <label class=" mb-2 btn rounded-pill btn-outline-success" for="14">Array</label>
-        <input name="option" onclick="" type="checkbox" class="btn-check" id="22" value="" autocomplete="off">
-        <label class=" mb-2 btn rounded-pill btn-outline-success" for="22">String</label>
-        <input name="option" onclick="" type="checkbox" class="btn-check" id="33" value="" autocomplete="off">
-        <label class=" mb-2 btn rounded-pill btn-outline-success" for="33" id="">Hash Table</label>
+        <% const tags = [ 'Array', 'StringHash', 'Table', 'Dynamic', 'Programming', 'Math', 'Sorting', 'Greedy', 'Depth-First', 'Search', 'Database', 'Binary Search', 'Breadth-First Search', 'Tree', 'Matrix'] %> 
+        <% for (let i = 0; i < tags.length; i++) { %>   
+          <input name="option" onclick="" type="checkbox" class="btn-check" id="tag+<%= i %>" value="tag+<%= i %>" autocomplete="off">
+          <label class=" mb-2 btn rounded-pill btn-outline-success" for="tag+<%= i %>"><%= tags[i] %></label>
+        <% } %> 
     </div>
 
     <button id="update" class="w-100 btn btn-lg btn-outline-warning" type="submit" disabled>Update</button>
@@ -116,4 +118,4 @@
 
 </main>
 
-<%- include("partials/footer") -%>
+<%- include("partials/threejsFooter") -%>

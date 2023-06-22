@@ -223,14 +223,11 @@ app.post("/register", async (req, res) => {
             await userProbs.save();
 
             sendMail(req.body.email, req.body.username);
-
-            console.log("User Created");
         
             res.redirect('/');
         } else 
         {
-            console.log("user already exists");
-            res.render('register', {errorMessage: "That email already has an account"});
+            res.render('register', {errorMessage: "Email already has an account."});
         }
 
     } catch {
