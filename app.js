@@ -1,9 +1,11 @@
 const express = require("express"); 
 const bodyParser = require("body-parser"); 
-const nodemailer = require("nodemailer");
 const cron =  require("node-cron");
 const LeetCode = require("leetcode-query");
 const bcrypt = require('bcrypt');
+
+const User = require("./myModules/userModule");
+const Mail = require("./myModules/mailModule");
 
 let leet = new LeetCode.LeetCode(); 
 
@@ -15,80 +17,16 @@ let hardQuestions = [];
 process.env.TZ = 'America/Los_Angeles';
 
 const mongoose = require("mongoose");
-const { errorMonitor } = require("nodemailer/lib/xoauth2");
+
 var url = 'mongodb+srv://c1brandon626:test123@cluster0.zi9jqhj.mongodb.net/codeMail';
-
-const userProblemSchema = new mongoose.Schema({
-    user: { type: String, required: true }, 
-    easy: { type: Array, required: true },
-    medium: { type: Array, required: true },
-    hard: { type: Array, required: true }
-});
-
-const userSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    email: { type: String, required: true }, 
-    password: { type: String, required: true },
-    status: {type: String, required: true },
-    schedule: { type: Array },
-    diffs: { type: Array }
-});
 
 const problemSchema = new mongoose.Schema({
     difficulty: { type: String,  required: true },
     list: { type: Array, default: [] }
 });
 
-const User = mongoose.model("User", userSchema)
+
 const Problem = mongoose.model("problem", problemSchema);
-const UserProblems = mongoose.model("userproblems", userProblemSchema);
-
-let mailTransporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    auth: {
-        user: 'liljgremlin@gmail.com',
-        pass: 'rnnfitdnzvsrputd'
-    }
-});
-
-async function sendMail(userEmail, userfName) {
-     
-    let mailDetails = {
-        from: mailTransporter.user,
-        to: userEmail,
-        subject: 'CodeMail: Thank Your for Signing Up '+userfName+'!',
-        text: "",
-        html: "<h1>Thank you for singing up!</h1><p>You will receive random leetcode question on the days you requested. </p><p>Enjoy the grid!</p>",
-    };
-     
-    mailTransporter.sendMail(mailDetails, function(err, data) {
-        if(err) {
-            console.log(err);
-        } else {
-            console.log('Email sent successfully');
-        }
-    });
-};
-
-async function mailRestart(user) {
-
-    let mailDetails = {
-        from: mailTransporter.user,
-        to: user.Email,
-        subject: 'codeMail: The questions have run out!'+user.fName+'!',
-        text: "",
-        html: "<h1>The questions you requested have run out!</h1><p><br>Dulplicate questions will start to appear. If you wish to stop please unsubscribe or change your frequency of questions to something new.</p><p><br>Thank you for using codeMail</p>",
-    };
-     
-    mailTransporter.sendMail(mailDetails, function(err, data) {
-        if(err) {
-            console.log(err);
-        } else {
-            console.log('Email sent successfully');
-        }
-    });
-}
 
 async function addUser(data) {
     const user = await User.findOne({email: data.email});  
@@ -111,10 +49,7 @@ async function addUser(data) {
             email: data.email,
             status: true,
             schedule: temp, 
-            diffs: data.diffs, 
-            easy: Array.from(Array(easyQuestions.length).keys()).map(x => x), 
-            medium: Array.from(Array(mediumQuestions.length).keys()).map(x => x), 
-            hard: Array.from(Array(hardQuestions.length).keys()).map(x => x)
+            diffs: data.diffs
         }); 
 
         await newUser.save();
@@ -148,7 +83,6 @@ app.use(express.static("public"));
 
 app.get("/main", function(req, res) {
     res.render("main", {userEmail: "test", errorMessage: "", currentStatus: "Active", userName: "test username", schedule: [false, false, false, false, false, false, false] , diffs: [false, false, false] } );
-        
 });
 
 app.get("/", function(req, res) {
@@ -209,20 +143,14 @@ app.post("/register", async (req, res) => {
                 password: hashedPassword,
                 status: "Not Active",
                 schedule: [false, false, false, false, false, false, false], 
-                diffs: [false, false, false]
+                diffs: [false, false, false],
+                tags: [],
+                time: "10 am", // Default it 10 am 
             }); 
 
-            const userProbs = new UserProblems({
-                user: newUser.id,
-                easy: easyQuestions,
-                medium: mediumQuestions, 
-                hard: hardQuestions
-            });
-
             await newUser.save();
-            await userProbs.save();
 
-            sendMail(req.body.email, req.body.username);
+            Mail.newUser(req.body.email, req.body.username);
         
             res.redirect('/');
         } else 
@@ -261,7 +189,6 @@ app.post("/update", async( req, res) => {
             userStatus = "Not Active";
         }
 
-        console.log("2");
         if (booleanDiffs[0] == false && booleanDiffs[1] == false && booleanDiffs[2] == false) {
             res.render("main", {userEmail: req.body.userEmail, errorMessage: "Please pick a difficulty", currentStatus: userStatus, userName: req.body.userName, schedule: booleanDays , diffs: booleanDiffs } );
         } else {
@@ -269,6 +196,8 @@ app.post("/update", async( req, res) => {
 
             res.render("main", {userEmail: user.email, errorMessage: "", currentStatus: userStatus, userName: user.username, schedule: booleanDays , diffs: booleanDiffs } );
         }
+
+
         
     } catch(error) {
         console.log(error);
@@ -279,140 +208,6 @@ app.post("/update", async( req, res) => {
 app.post("/SignOut", async(req, res)  => {
     res.redirect('/');
 });
-
-const temp = async() => {
-    const easy = await Problem.findOne({ difficulty: "easy" });
-        const medium = await Problem.findOne({ difficulty: "medium" });
-        const hard = await Problem.findOne({ difficulty: "hard" }); 
-
-        const userOne = new User({
-            name: "liljGremlin", 
-            email: "c1brandon626@gmail.com",
-            schedule: [ true, true, true, true, true, true, true ], 
-            diffs: [ "easy", "medium" ],
-            easy: easy, 
-            medium: medium, 
-            hard: hard
-        }); 
-
-        const userTwo = new User({
-            name: "bcastro9", 
-            email: "bcastro9@ucsc.edu",
-            schedule: [ true, true, true, true, true, false, false ],
-            diffs: [ "medium", "hard" ], 
-            easy: easy, 
-            medium: medium, 
-            hard: hard
-        }); 
-
-
-        userOne.save(); 
-        userTwo.save();
-
-};
-
-
-function getRandomQuestions(user, diff) {
-
-    switch(diff)
-    {
-        case "easy": return Math.floor(Math.random()*user.easy.length); 
-        break; 
-        case "medium": return Math.floor(Math.random()*user.medium.length);
-        break;
-        default: return Math.floor(Math.random()*user.hard.length); 
-    }
-};
-
-async function updateUserQuestions(u, index, diffsIndex) {
-
-    switch(u.diffs[diffsIndex]) {
-        case "easy": 
-            u.easy.splice(index, 1); 
-            const a = await User.updateOne({ email: u.email }, { easy: u.easy });
-            break;
-        case "medium": 
-            u.medium.splice(index, 1);
-            const b = await User.updateOne({ email: u.email }, { medium: u.medium });
-            break;
-        default: 
-            u.hard.splice(index, 1);
-            const c = await User.updateOne({ email: u.email }, { hard: u.hard });
-    }
-
-    console.log("User with email: "+u.email+" db was updated.");
-};
-
-const sendQuestionsToUsers = async() => {
-    const users = await User.find().exec();
-    
-    users.forEach(function(u) {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const date = new Date();
-        if (u.subs && u.schedule[date.getDay()]) {
-            
-            // Generate the questions for the user 
-
-            // ["easy"]
-            // ["medium", "hard"]
-            // ["easy", "medium", "hard"]
-
-            let question = "";
-            let diffsIndex = 0; 
-            let index = -1;
-
-            if (u.diffs.length == 2)
-            {
-                diffsIndex = Math.floor(Math.random()*2);
-
-            } else if (u.diffs.length == 3)
-            {
-                diffsIndex = Math.floor(Math.random()*3);
-            }
-
-            index = getRandomQuestions(u, u.diffs[diffsIndex]);
-
-            // Delete random question from the array and update the db 
-
-            switch(u.diffs[diffsIndex]) {
-                case "easy": 
-                    question = easyQuestions[u.easy[index]];
-                    break;
-                case "medium": 
-                    question = mediumQuestions[u.medium[index]];
-                    break;
-                default: 
-                    question = hardQuestions[u.hard[index]];
-            }
-
-            updateUserQuestions(u, index, diffsIndex);
-
-            let message = "<h2>Question of the  day is: <a href='https://leetcode.com/problems/"+question+"/'>"+question+"</a></h2>";
-
-            let mailDetails = {
-                from: mailTransporter.user,
-                to:u.email,
-                subject: 'LeetCode Question!',
-                text: "Stay on the Grid.",
-                html: message,
-            };
-
-            mailTransporter.sendMail(mailDetails, function(err, data) {
-                if(err) {
-                    console.log(err);
-                } else {
-                    console.log('Email sent successfully');
-                }
-            });
-        }
-    })
-};
-
-const setCron = async() => {
-    cron.schedule('* * * * * ', () => {
-        sendQuestionsToUsers();
-    });
-};
 
 const start = async() => {
     try {

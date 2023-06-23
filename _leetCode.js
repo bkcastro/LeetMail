@@ -9,6 +9,21 @@ const problemSchema = new mongoose.Schema({
     list: { type: Array, default: [] }
 });
 
+const tagSchema = new mongoose.Schema({
+    tag: { type: String, required: true }, 
+    list: { type: Array, default: [] }
+});
+
+async function setTags() {
+    await mongoose.connect(url);
+
+    const tagNames = [ 'Array', 'StringHash', 'Table', 'Dynamic', 'Programming', 'Math', 'Sorting', 'Greedy', 'Depth-First', 'Search', 'Database', 'Binary Search', 'Breadth-First Search', 'Tree', 'Matrix'];
+
+    for (let i = 0; i < tagNames.length; i++) { 
+
+    }
+}
+
 async function update() {
 
     try 
@@ -23,7 +38,11 @@ async function update() {
         let medium = await Problem.findOne({difficulty: "medium"}).exec(); 
         let hard = await Problem.findOne({difficulty: "hard"}).exec();
 
-        for (let i = 0; i < 2638; i += 25)
+        // The only way I know how to get the total number of questons. 
+        let dummy = await leet.problems({ limit: 1}); 
+        var size = dummy.total;
+
+        for (let i = 0; i < size; i += 25)
         {
             let query = await leet.problems({ offset: i, limit: 25 });
 
@@ -38,6 +57,8 @@ async function update() {
                         break;
                         case "Hard": hard.list.push(q.titleSlug);      
                     }
+
+
                 }
             });
 
