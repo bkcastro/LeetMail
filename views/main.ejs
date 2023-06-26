@@ -66,7 +66,7 @@
 
     <p class="dropdown-toggle text-center strike-through" onclick="toggleOptions()">More Options</p>
     <div id="options" hidden="true" class="mb-2">
-        <% const tags = [ 'Array', 'StringHash', 'Table', 'Dynamic', 'Programming', 'Math', 'Sorting', 'Greedy', 'Depth-First', 'Search', 'Database', 'Binary Search', 'Breadth-First Search', 'Tree', 'Matrix'] %> 
+        <% const tags = [ 'Array', 'Math', 'Sorting', 'Greedy', 'Depth-First Search', 'Database', 'Binary Search', 'Breadth-First Search', 'Tree', 'Matrix'] %> 
         <% for (let i = 0; i < tags.length; i++) { %>   
           <input name="option" onclick="" type="checkbox" class="btn-check" id="tag+<%= i %>" value="tag+<%= i %>" autocomplete="off">
           <label class=" mb-2 btn rounded-pill btn-outline-success" for="tag+<%= i %>"><%= tags[i] %></label>

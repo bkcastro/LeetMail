@@ -6,8 +6,8 @@ let mailTransporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
     auth: {
-        user: 'liljgremlin@gmail.com',
-        pass: 'rnnfitdnzvsrputd'
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD
     }
 });
 
@@ -25,7 +25,28 @@ async function newUser(userEmail, userfName) {
         if(err) {
             console.log(err);
         } else {
-            console.log('Email sent successfully');
+            //console.log('Email sent successfully');
+        }
+    });
+};
+
+async function sendLeetCodeQuestion(email, question) {
+
+    const questionURL = question; 
+
+    let mailDetails = {
+        from: mailTransporter.user,
+        to: userEmail,
+        subject: 'CodeMail: Time for you LeetCode '+userfName+'!',
+        text: "",
+        html: '<a href="'+questionURL+'"><h1>'+question+'</h1></a>',
+    };
+     
+    mailTransporter.sendMail(mailDetails, function(err, data) {
+        if(err) {
+            console.log(err);
+        } else {
+            //console.log('Email sent successfully');
         }
     });
 };

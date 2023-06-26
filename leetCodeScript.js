@@ -4,16 +4,6 @@ var url = 'mongodb+srv://c1brandon626:test123@cluster0.zi9jqhj.mongodb.net/codeM
 const LeetCode = require("leetcode-query");
 let leet = new LeetCode.LeetCode();  
 
-const problemSchema = new mongoose.Schema({
-    difficulty: { type: String,  required: true },
-    list: { type: Array, default: [] }
-});
-
-const tagSchema = new mongoose.Schema({
-    tag: { type: String, required: true }, 
-    list: { type: Array, default: [] }
-});
-
 async function setTags() {
     await mongoose.connect(url);
 
@@ -63,14 +53,20 @@ async function update() {
             });
 
         }
-
-        const updateEasy = await Problem.findOneAndUpdate( { difficulty:  'easy' }, { list:  easy.list } );
-        const updateMedium = await Problem.updateOne( { difficulty: 'medium' }, { list:  medium.list });
-        const updateHard =  await Problem.updateOne( { difficulty: 'hard' }, { list:  hard.list });
-
         console.log("Done");
     }
     catch(e) {
         console.log(e.message);
     }
 };
+
+async function test() {
+
+    for (let i = 0; i < 100; i += 25) {
+        let query = await leet.problems({ offset: i, limit: 25 });
+        console.log(query); 
+    }
+      
+}
+
+test(); 
