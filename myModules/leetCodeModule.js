@@ -7,6 +7,7 @@ const url = process.env.DB_URL;
 const LeetCode = require("leetcode-query");
 const { constrainedMemory } = require('process');
 const { bulkSave } = require('./userModule');
+
 let leet = new LeetCode.LeetCode();  
 
 const questionsSchema = new mongoose.Schema({
@@ -20,8 +21,14 @@ const questionsSchema = new mongoose.Schema({
 
 const tagSchema = new mongoose.Schema({
     title: { type: String, required: true }, 
-    list: { type:Array, required: true }
+    list: { type: Array, required: true }
 }); 
+
+const difficultySchema = new mongoose.Schema({
+    difficulty: { type: String, required: true }, // Easy || Medium || Hard
+    list: { type: Array, required: true },
+    tags: { type: [tagSchema] }
+});
 
 async function setUpTags() {
 
@@ -38,15 +45,27 @@ async function setUpTags() {
     return dataHolder; 
 }
 
+async function setUpDifficulties() {
+    const Difficulty = mongoose.model.apply("Difficulty",  difficultySchema); 
+
+    let dataHolder = new Map(); 
+
+    const documents = await Difficulty.find({}); 
+
+    documents.forEach( (d) => {
+        dataHolder.set(d.title, { list: d.list, tags: d.tags });
+    });
+}
+
 // This function will update the database with new leetcode questions added if any. 
 async function update() {
     try 
     {
         await mongoose.connect(url);
 
-        const Question = await mongoose.model("Question", questionsSchema); 
-        const Tag = await mongoose.model("Tag", tagSchema);
-
+        const Question = mongoose.model("Question", questionsSchema); 
+        const Tag = mongoose.model("Tag", tagSchema);
+        const Difficulty = mongoose.model("Difficulty", difficultySchema);
         //const have = await Question.estimatedDocumentCount(); 
         const have = 0 
 
@@ -57,7 +76,8 @@ async function update() {
         console.log("New questions needed: " + (need-have)); 
 
         const questionsList = [];
-        const tagMap = await setUpTags(); 
+        const tagMap = await setUpTags();
+        const difficultyMap = await setUpDifficulties(); 
 
         for (let i = have; i < need; i += 25) {
 
@@ -67,33 +87,41 @@ async function update() {
         
             query.questions.forEach( (q) => {
 
-                const tempTagList = []; 
-            
-                q.topicTags.forEach( (t) => {
-                    tempTagList.push(t.name); 
-                   
-                    if (tagMap.has(t.name)) {
-                        const tempTagMapValue = tagMap.get(t.name);
-                        tempTagMapValue.push(q.questionFrontendId); 
-                        tagMap.set(t.name, tempTagMapValue); 
-                    }
+                if (!q.isPaidOnly) {
+
+                    const tempTagList = []; 
+                    const difficultyData = difficultyMap.get(q.difficulty); 
+
+                    difficultyData.list.push(q.questionFrontendId); 
+        
+                    q.topicTags.forEach( (t) => {
+                        tempTagList.push(t.name); 
                     
-                });
+                        if (tagMap.has(t.name)) {
+                            difficultyData.tags.set()
+                            const tempTagMapValue = tagMap.get(t.name);
+                            tempTagMapValue.push(q.questionFrontendId); 
+                            tagMap.set(t.name, tempTagMapValue); 
+                        }
+                        
+                    });
 
-                // Difficulty 
-                const tempTagMapValue = tagMap.get(q.difficulty);
-                tempTagMapValue.push(q.questionFrontendId); 
-                tagMap.set(q.difficulty, tempTagMapValue); 
+                    
 
-                questionsList.push({
-                    questionFrontendId: q.questionFrontendId, 
-                    acRate: q.acRate, 
-                    difficulty: q.difficulty,
-                    title: q.title, 
-                    titleSlug: q.titleSlug,
-                    tags: tempTagList
-                })
-            
+                
+                    // Difficulty 
+                    difficultyMap.set(q.difficulty,  )
+                    
+
+                    questionsList.push({
+                        questionFrontendId: q.questionFrontendId, 
+                        acRate: q.acRate, 
+                        difficulty: q.difficulty,
+                        title: q.title, 
+                        titleSlug: q.titleSlug,
+                        tags: tempTagList
+                    });
+                }
             });
         }
 
@@ -108,8 +136,8 @@ async function update() {
             });
         });
 
-        console.log(tagMapToArrayForBulk);
 
+        /*
         try { 
             const bulkResponse = await Tag.bulkWrite(tagMapToArrayForBulk);
 
@@ -120,7 +148,6 @@ async function update() {
             console.log(err);
         }
 
-        /*
         try {
             const insertManyResponse = await Question.insertMany(questionsList); 
 
@@ -139,40 +166,48 @@ async function update() {
     }
 };
 
+
 async function testing() {
-    try {
-        await mongoose.connect(url);
 
-        const Tag = await mongoose.model("Tag", tagSchema);
-        const tagMap = await setUpTags(); 
+    await mongoose.connect(url); 
 
+    const Tag = mongoose.model("Tag", tagSchema); 
+    const Difficulty = mongoose.model("Difficulty", difficultySchema);
 
-        const tagMapToArrayForBulk = [];
-
-        tagMap.forEach( ( value, key) => {
-            tagMapToArrayForBulk.push({
-                updateOne: {
-                    filter: { title: key }, 
-                    update: { list: [] }
-                }
-            });
-        });
-
-        console.log(tagMapToArrayForBulk);
-
-        try { 
-            const bulkResponse = await Tag.bulkWrite(tagMapToArrayForBulk);
-
-            if (bulkResponse) {
-                console.log(bulkResponse);
+    const tagMap = await setUpTags();
+    const tagArray = []  
+    
+    tagMap.forEach( (value, key) => {
+        tagArray.push(
+            {
+                title: key, 
+                list: []
             }
-        } catch (err) {
-            console.log(err);
-        } 
+        )
+    }); 
 
-    } catch(err) {
-        console.log(err);
-    }
+    const r = await Difficulty.bulkWrite([
+        {
+            updateOne: {
+                filter: { difficulty: "Easy" }, 
+                update: { tags: tagArray, list: [1, 2,3 ] }
+            }
+        },
+        {
+            updateOne: {
+                filter: { difficulty: "Medium" }, 
+                update: { tags: tagArray }
+            }
+        },
+        {
+            updateOne: {
+                filter: { difficulty: "Hard" }, 
+                update: { tags: tagArray }
+            }
+        }
+    ]);
+
+    console.log(r);
 }
 
-update();
+testing();
