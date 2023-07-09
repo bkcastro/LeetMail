@@ -6,9 +6,7 @@ const bcrypt = require('bcrypt');
 
 const User = require("./myModules/userModule");
 const Mail = require("./myModules/mailModule");
-
-let leet = new LeetCode.LeetCode(); 
-require('dotenv').config();
+const Leet = require("./myModules/leetCodeModule");
 
 // set the timezone to Pacific Daylight Time
 process.env.TZ = 'America/Los_Angeles';
@@ -44,7 +42,7 @@ app.post("/login", async (req, res) => {
     try {
         const user = await User.findOne({email: req.body.email});
 
-        if (user ==  null) {
+        if (user == null) {
             res.render("login", {errorMessage: "Email not registered with an acount."});
         } else 
         {
@@ -154,11 +152,14 @@ app.post("/SignOut", async(req, res)  => {
 const start = async() => {
     try {
 
-        // 1. connect to the database and set up questions for fast acces
         // 2. set up cron schedule 
         // 3. set up server 
 
-        await mongoose.connect(url);
+        await mongoose.connect(url, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            dbName: "CodeMail",
+        });
         
         //setCron(); 
 

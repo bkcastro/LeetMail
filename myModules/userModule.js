@@ -11,4 +11,17 @@ const userSchema = new mongoose.Schema({
     time: { type: String, required: true }
 });
 
-module.exports = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema); 
+
+async function getUserData(id) {
+    try {
+        return await User.findById(id); 
+    } catch(err) {
+        console.log(err);
+    }
+     
+};
+
+module.exports = { 
+    getUserData,
+}

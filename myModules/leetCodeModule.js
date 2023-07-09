@@ -1,23 +1,28 @@
 // This file will get all of the free leetcode questions and put them into my database. 
+const User = require("./userModule");
+
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const mongoose = require("mongoose");
 const url = process.env.DB_URL;
 const LeetCode = require("leetcode-query");
-const { constrainedMemory } = require('process');
-const { bulkSave } = require('./userModule');
+const { randomFill } = require("crypto");
 
 let leet = new LeetCode.LeetCode();  
 
-const questionsSchema = new mongoose.Schema({
+const tags = { 'Array': 0 , 'Math': 1, 'Sorting': 2, 'Greedy': 3, 'Depth-First Search': 4, 'Database': 5, 'Binary Search': 6, 'Breadth-First Search': 7, 'Tree': 8, 'Matrix': 9 }; 
+const difficultys = [ 'Easy', 'Medium', 'Hard' ];
+
+const problemSchema = new mongoose.Schema({
     questionFrontendId: { type: Number, required: true },
     acRate: { type: Number, required: true }, 
     difficulty: { type: String, required: true }, 
     title: { type: String, required: true }, 
     titleSlug: { type: String, required: true },
-    tags: { type: Array, required: true }
-}); 
+    tags: { type: Array, required: true },
+    free: { type: Boolean, required: true },
+});
 
 const tagSchema = new mongoose.Schema({
     title: { type: String, required: true }, 
@@ -30,7 +35,11 @@ const difficultySchema = new mongoose.Schema({
     tags: { type: [tagSchema] }
 });
 
-async function setUpTags() {
+const Problem = mongoose.model("Problem", problemSchema); 
+const Tag = mongoose.model("Tag", tagSchema);
+const Difficulty = mongoose.model("Difficulty", difficultySchema);
+
+async function setUpTagMap(withData=true) {
 
     const Tag = await mongoose.model("Tag", tagSchema);
 
@@ -39,46 +48,57 @@ async function setUpTags() {
     const documents = await Tag.find({});
 
     documents.forEach( (t) => {
-        dataHolder.set(t.title, t.list);
+
+        if (withData) {
+            dataHolder.set(t.title, t.list);
+        } else 
+        {
+            dataHolder.set(t.title, []);
+        }
+        
     });
 
     return dataHolder; 
 }
 
-async function setUpDifficulties() {
-    const Difficulty = mongoose.model.apply("Difficulty",  difficultySchema); 
+async function setUpDifficultyMap() {
 
-    let dataHolder = new Map(); 
+    const Difficulty = await mongoose.model("Difficulty",  difficultySchema);  
+
+    const dataHolder = new Map();
 
     const documents = await Difficulty.find({}); 
 
     documents.forEach( (d) => {
-        dataHolder.set(d.title, { list: d.list, tags: d.tags });
+
+        const tempTags = new Map(); 
+
+        d.tags.forEach((tag) => {
+            tempTags.set(tag.title, tag.list);
+        });
+
+        dataHolder.set(d.difficulty, { list: d.list, tags: tempTags });
     });
+
+    return dataHolder;
 }
 
-// This function will update the database with new leetcode questions added if any. 
+// This function will update the database with new leetcode questions 
 async function update() {
     try 
     {
-        await mongoose.connect(url);
-
-        const Question = mongoose.model("Question", questionsSchema); 
-        const Tag = mongoose.model("Tag", tagSchema);
-        const Difficulty = mongoose.model("Difficulty", difficultySchema);
-        //const have = await Question.estimatedDocumentCount(); 
-        const have = 0 
+        const have = await Problem.estimatedDocumentCount(); 
 
         let dummy = await leet.problems({ limit: 1}); 
         var need = dummy.total;
-
+        
         console.log("Total number of leetCode questions: " + need); 
         console.log("New questions needed: " + (need-have)); 
 
-        const questionsList = [];
-        const tagMap = await setUpTags();
-        const difficultyMap = await setUpDifficulties(); 
-
+        const problemList = [];
+        const tagMap = await setUpTagMap();
+        const difficultyMap = await setUpDifficultyMap(); 
+        
         for (let i = have; i < need; i += 25) {
 
             console.log("Current index: "+i);
@@ -87,9 +107,10 @@ async function update() {
         
             query.questions.forEach( (q) => {
 
+                const tempTagList = []; 
+
                 if (!q.isPaidOnly) {
 
-                    const tempTagList = []; 
                     const difficultyData = difficultyMap.get(q.difficulty); 
 
                     difficultyData.list.push(q.questionFrontendId); 
@@ -98,7 +119,10 @@ async function update() {
                         tempTagList.push(t.name); 
                     
                         if (tagMap.has(t.name)) {
-                            difficultyData.tags.set()
+                            const  difficultyDataTagValue = difficultyData.tags.get(t.name); 
+                            difficultyDataTagValue.push(q.questionFrontendId); 
+                            difficultyData.tags.set(t.name, difficultyDataTagValue);
+
                             const tempTagMapValue = tagMap.get(t.name);
                             tempTagMapValue.push(q.questionFrontendId); 
                             tagMap.set(t.name, tempTagMapValue); 
@@ -106,22 +130,19 @@ async function update() {
                         
                     });
 
-                    
-
-                
-                    // Difficulty 
-                    difficultyMap.set(q.difficulty,  )
-                    
-
-                    questionsList.push({
-                        questionFrontendId: q.questionFrontendId, 
-                        acRate: q.acRate, 
-                        difficulty: q.difficulty,
-                        title: q.title, 
-                        titleSlug: q.titleSlug,
-                        tags: tempTagList
-                    });
+                    difficultyMap.set(q.difficulty, difficultyData);
                 }
+
+                problemList.push({
+                    questionFrontendId: q.questionFrontendId, 
+                    acRate: q.acRate, 
+                    difficulty: q.difficulty,
+                    title: q.title, 
+                    titleSlug: q.titleSlug,
+                    tags: tempTagList,
+                    free: !q.isPaidOnly
+                });
+
             });
         }
 
@@ -136,28 +157,34 @@ async function update() {
             });
         });
 
+        const diffMapToArrayForBulk = []; 
 
-        /*
-        try { 
-            const bulkResponse = await Tag.bulkWrite(tagMapToArrayForBulk);
+        difficultyMap.forEach( (value, key) => {
 
-            if (bulkResponse) {
-                console.log(bulkResponse);
-            }
-        } catch (err) {
-            console.log(err);
-        }
+            const temp = []; 
+            
+            value.tags.forEach((value, key) => {
+                temp.push({
+                    title: key, 
+                    list: value
+                });
+            });
 
-        try {
-            const insertManyResponse = await Question.insertMany(questionsList); 
+            diffMapToArrayForBulk.push({
+                updateOne: {
+                    filter: { difficulty: key },
+                    update: { list: value.list, tags: temp }
+                }
+            })
+        });
 
-            if (insertManyResponse) {
-                console.log(insertManyResponse);
-            }
-        } catch (err) {
-            console.log(err);
-        } */
-
+        const problemRes = await Problem.insertMany(problemList); 
+        console.log(problemRes);
+        const difficultyRes = await Difficulty.bulkWrite(diffMapToArrayForBulk);
+        console.log(difficultyRes);
+        const tagRes = await Tag.bulkWrite(tagMapToArrayForBulk);
+        console.log(tagRes);
+       
         console.log("Done");
     }
 
@@ -166,48 +193,56 @@ async function update() {
     }
 };
 
+async function getProblem(id=null) {
+    try {
+        const output = await Problem.find({questionFrontendId: id});
+        return output; 
 
-async function testing() {
-
-    await mongoose.connect(url); 
-
-    const Tag = mongoose.model("Tag", tagSchema); 
-    const Difficulty = mongoose.model("Difficulty", difficultySchema);
-
-    const tagMap = await setUpTags();
-    const tagArray = []  
-    
-    tagMap.forEach( (value, key) => {
-        tagArray.push(
-            {
-                title: key, 
-                list: []
-            }
-        )
-    }); 
-
-    const r = await Difficulty.bulkWrite([
-        {
-            updateOne: {
-                filter: { difficulty: "Easy" }, 
-                update: { tags: tagArray, list: [1, 2,3 ] }
-            }
-        },
-        {
-            updateOne: {
-                filter: { difficulty: "Medium" }, 
-                update: { tags: tagArray }
-            }
-        },
-        {
-            updateOne: {
-                filter: { difficulty: "Hard" }, 
-                update: { tags: tagArray }
-            }
-        }
-    ]);
-
-    console.log(r);
+    } catch(err) {
+        console.log(err);
+    }
 }
 
-testing();
+async function getRandomProblem() {
+    try {
+        
+    } catch(err) {
+        console.log(err);
+    }
+}
+
+async function getRandomProblemFromUser(id){
+    try {
+        const userData = await User.getUserData(id); 
+    
+        const randDiffNum = Math.floor(Math.random()*userData.diffs.length); 
+        const randTagNum = Math.floor(Math.random()*userData.tags.length);
+
+        console.log(userData.diffs[randDiffNum]); 
+        console.log(userData.tags[randTagNum]); 
+
+        const randDiff = await Difficulty.find({difficulty: userData.diffs[randDiffNum]}); 
+        const randomId = Math.floor(Math.random()*randDiff.tags[userData.tags[randTagNum]].list.length);
+
+        let output = null;  
+
+        randDiff.tags.forEach(async (value)=>{
+            if (value.title == userData.tags[randTagNum]) {
+                const randTemp = Math.floor(Math.random()*value.list.length); 
+
+                output = await Problem.find({questionFrontendId: value.list[randTemp]}); 
+            }
+        }); 
+
+        return output; 
+ 
+    } catch(err) {
+        console.log(err);
+    }
+}
+
+module.exports = {
+    update, 
+    getRandomProblem,
+    getRandomProblemFromUser,
+};
