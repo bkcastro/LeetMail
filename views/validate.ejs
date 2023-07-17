@@ -1,0 +1,21 @@
+<%- include("partials/header") -%>
+<body>
+    <div class="d-flex align-items-center justify-content-center vw-100 vh-100">
+        <div class="text-center">
+            <h1>Thank you <b class="text-warning"><%= username %></b>! </h1>
+            <h5>An email was sent to <b class="text-info"><%= email %></b>, activate your account by clicking on the link. </h5>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js"></script>
+    <script>
+        const jsConfetti = new JSConfetti(); 
+        jsConfetti.addConfetti({
+            emojis: ['😓','💻','🎉'],
+            emojiSize: 50,
+            confettiNumber: 70,
+        });
+
+    </script>
+    
+<%- include("partials/footer") -%>
+    

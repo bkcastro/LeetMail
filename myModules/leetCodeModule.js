@@ -35,9 +35,24 @@ const difficultySchema = new mongoose.Schema({
     tags: { type: [tagSchema] }
 });
 
+
+const timeSchema = new mongoose.Schema({
+    time: { type: String, required: true },
+    days: { 
+        Monday: [{ userId: String }],
+        Tuesday: [{ userId: String }],
+        Wednesday: [{ userId: String }],
+        Thursday: [{ userId: String }],
+        Friday: [{ userId: String }],
+        Saturday: [{ userId: String }],
+        Sunday: [{ userId: String }]
+    },
+});
+
 const Problem = mongoose.model("Problem", problemSchema); 
 const Tag = mongoose.model("Tag", tagSchema);
 const Difficulty = mongoose.model("Difficulty", difficultySchema);
+const Time = mongoose.model("Time", timeSchema);
 
 async function setUpTagMap(withData=true) {
 
@@ -245,4 +260,5 @@ module.exports = {
     update, 
     getRandomProblem,
     getRandomProblemFromUser,
+    Time
 };

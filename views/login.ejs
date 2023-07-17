@@ -3,26 +3,27 @@
 <body class="text-center">
 <main class="form-signin w-100 m-auto text-align">
   <div id="canvas-container"></div>
-  <form action="/login"  method="POST">
+  <form action="/login/password"  method="POST">
     
     <h1 class="h3 mb-3 fw-normal text-dark">Welcome to <b class="text-warning">CodeMail!</b></h1>
     <p class="">With <b class="text-warning">CodeMail</b> you will receive random unique <b class="text-orange">LeetCode</b> questions on the days that you choose. You can also change the difficulty of the questions. </p>
 
     <p class="text-danger"><%=errorMessage%></p>
     <div class="form-floating">
-        <input type="text" name="password" class="form-control top" id="passwrod" placeholder="Password" required>
-        <label for="password">Password</label>
+      <input type="text" name="username" class="form-control" id="username" placeholder="username" required>
+      <label for="username">Username</label>
     </div>
     <div class="form-floating bottom">
-      <input type="email" name="email" class="form-control" id="email" placeholder="name@example.com" required>
-      <label for="email">Email</label>
+        <input type="text" name="password" class="form-control top" id="password" placeholder="Password" required>
+        <label for="password">Password</label>
     </div>
+    
     
     <button class="w-100 btn btn-lg btn-success mb-1" type="submit">Login</button>
     <button class="w-100 btn btn-lg btn-primary mb-1" type="submit">Google</button>
   </form>
 
-  <p class="mt-2"><a href="/register" class="text-warning">Register new account</a></p>
+  <p class="mt-2"><a href="/signup" class="text-warning">Register new account</a></p>
   <p class="mt-2"><a href="/forgotpassword" class="text-danger">Forgot Password?</a></p>
   <p class="mt-5 text-muted">&copy; CodeMail Co</p>
 </main>
