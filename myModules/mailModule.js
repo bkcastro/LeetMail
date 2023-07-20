@@ -3,12 +3,6 @@ const nodemailer = require("nodemailer");
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const protocol = req.protocol; // 'http' or 'https'
-const host = req.get('host'); // 'localhost:3000' or your domain name in production
-const rootUrl = `${protocol}://${host}`;
-
-console.log(rootUrl);
-
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {

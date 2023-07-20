@@ -26,13 +26,14 @@ async function runCron() {
 
         ids.forEach(async (id) => {
             const user = await User.findById(id); 
-            // Send a random question to that user 
-
             const question = await Leet.getRandomProblemFromUser(user);
             await Mail.mailLeetCodeQuestion(user, question);
-
         });
     });
+
+    cron.schedule("*/12 * * * *", () => {
+        console.log("Lets keep render awake!");
+      });
 }
 
 module.exports = runCron; 

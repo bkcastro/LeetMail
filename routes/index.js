@@ -12,10 +12,6 @@ async function fetchUserData(req, res, next) {
     next();
 };
 
-router.get('/forgotpassword', function(req, res, next) {
-    res.render('forgotpassword');
-});
-
 router.get('/', function(req, res, next) {
     if (!req.user) { return res.render('home'); }
     next();

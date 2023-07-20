@@ -5,14 +5,13 @@ var LocalStrategy = require('passport-local');
 
 const crypto = require('crypto');
   
-
 const User = require('../myModules/userModule');
 const Token = require('../myModules/tokeModule');
 const Mail = require('../myModules/mailModule');
 
 var router = express.Router(); 
 
-const maxUsers = 100;
+const maxUsers = process.env.MAXUSERS;
 
 passport.use(new LocalStrategy(async function verify(username, password, cb) {
     try {
