@@ -12,6 +12,8 @@ const Mail = require('../myModules/mailModule');
 
 var router = express.Router(); 
 
+const maxUsers = 100;
+
 passport.use(new LocalStrategy(async function verify(username, password, cb) {
     try {
         const user = await User.findOne({username: username}); 
@@ -35,7 +37,7 @@ passport.use(new LocalStrategy(async function verify(username, password, cb) {
 
 passport.serializeUser(function(user, cb) {
     process.nextTick(function() {
-      cb(null, { id: user._id, username: user.username, status: user.status });
+      cb(null, { id: user._id, username: user.username, status: user.status, schedule: user.schedule, diffs: user.diffs, tags: user.tags });
     });
 });
   
@@ -44,7 +46,6 @@ passport.serializeUser(function(user, cb) {
       return cb(null, user);
     });
 });
-
 
 router.get('/login', function(req, res, next) {
 
@@ -100,6 +101,13 @@ router.get('/signup',function(req, res, next) {
 router.post('/signup', async function(req, res, next) {
 
     try {
+
+        // Check if max user have been reached which is 100 by default 
+        const userCount = await User.estimatedDocumentCount(); 
+        if (userCount > maxUsers) {
+            return res.render('maxUsers');
+        }
+        
         // Check if username doesn't exists
         const userOne = await User.findOne({ username: req.body.username }); 
         if (userOne != null) { return res.render('signup', {errorMessage: "Username already taken." }); }
@@ -118,7 +126,6 @@ router.post('/signup', async function(req, res, next) {
             schedule: [],
             diffs: [], 
             tags: [],
-            time: "10 am"
         }); 
 
         await newUser.save(); 

@@ -3,6 +3,12 @@ const nodemailer = require("nodemailer");
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
+const protocol = req.protocol; // 'http' or 'https'
+const host = req.get('host'); // 'localhost:3000' or your domain name in production
+const rootUrl = `${protocol}://${host}`;
+
+console.log(rootUrl);
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -32,29 +38,24 @@ async function newUser(email, username, token) {
     });
 };
 
-async function sendLeetCodeQuestion(email, question) {
-
-    const questionURL = question; 
+async function mailLeetCodeQuestion(user, question) {
 
     let mailDetails = {
-        from: mailTransporter.user,
-        to: userEmail,
-        subject: 'CodeMail: Time for you LeetCode '+userfName+'!',
+        from: 'LeetMail dave@leetmail.com',
+        to: user.email,
+        subject: 'LeetMail: '+question.title+'.',
         text: "",
-        html: '<a href="'+questionURL+'"><h1>'+question+'</h1></a>',
+        html: '<a href="https://leetcode.com/problems/'+question.titleSlug+'/"><h1>'+question.title+'</h1></a><p>Click on the question above to be re-direct to the leetcode problem. </p><p>Good luck '+user.username+'!</p>',
     };
      
-    mailTransporter.sendMail(mailDetails, function(err, data) {
+    transporter.sendMail(mailDetails, function(err, data) {
         if(err) {
             console.log(err);
-        } else {
-            //console.log('Email sent successfully');
         }
     });
 };
 
-//newUser('c1brandon626@gmail.com', 'liljgremlin', '1029dkhcasdfadskljttj3i0dc89d0');
-
 module.exports = {
-    newUser
+    newUser,
+    mailLeetCodeQuestion,
 }

@@ -10,10 +10,7 @@ const LeetCode = require("leetcode-query");
 const { randomFill } = require("crypto");
 
 let leet = new LeetCode.LeetCode();  
-
-const tags = { 'Array': 0 , 'Math': 1, 'Sorting': 2, 'Greedy': 3, 'Depth-First Search': 4, 'Database': 5, 'Binary Search': 6, 'Breadth-First Search': 7, 'Tree': 8, 'Matrix': 9 }; 
-const difficultys = [ 'Easy', 'Medium', 'Hard' ];
-
+const tags = new Map([["Array", 0], ["Math", 1], ["Sorting", 2], ["Greedy", 3], ["Depth-First Search", 4], ["Database", 5], ["Binary Search", 6], ["Breadth-Frist Search", 7], ["Tree", 8], ["Matrix", 9]])
 const problemSchema = new mongoose.Schema({
     questionFrontendId: { type: Number, required: true },
     acRate: { type: Number, required: true }, 
@@ -35,24 +32,21 @@ const difficultySchema = new mongoose.Schema({
     tags: { type: [tagSchema] }
 });
 
-
-const timeSchema = new mongoose.Schema({
-    time: { type: String, required: true },
-    days: { 
-        Monday: [{ userId: String }],
-        Tuesday: [{ userId: String }],
-        Wednesday: [{ userId: String }],
-        Thursday: [{ userId: String }],
-        Friday: [{ userId: String }],
-        Saturday: [{ userId: String }],
-        Sunday: [{ userId: String }]
-    },
+const userBankSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
 });
 
 const Problem = mongoose.model("Problem", problemSchema); 
 const Tag = mongoose.model("Tag", tagSchema);
 const Difficulty = mongoose.model("Difficulty", difficultySchema);
-const Time = mongoose.model("Time", timeSchema);
+
+const Monday = mongoose.model("Monday", userBankSchema); 
+const Tuesday = mongoose.model("Tuesday", userBankSchema); 
+const Wednesday = mongoose.model("Wednesday", userBankSchema); 
+const Thursday = mongoose.model("Thursday", userBankSchema); 
+const Friday = mongoose.model("Friday", userBankSchema); 
+const Saturday = mongoose.model("Saturday", userBankSchema); 
+const Sunday = mongoose.model("Sunday", userBankSchema);
 
 async function setUpTagMap(withData=true) {
 
@@ -208,48 +202,51 @@ async function update() {
     }
 };
 
-async function getProblem(id=null) {
+async function getRandomProblem(difficulty=null) {
     try {
-        const output = await Problem.find({questionFrontendId: id});
-        return output; 
 
-    } catch(err) {
-        console.log(err);
-    }
-}
+        if (difficulty) { // difficulty = "Easy" || "Medium" || "Hard"
+            const temp = await Difficulty.findOne({ difficulty: difficulty }); 
 
-async function getRandomProblem() {
-    try {
+            const randomValue = Math.floor(Math.random() * temp.list.length);
+            const questionFrontendId = temp.list[randomValue];
+
+            const question = await Problem.find({ questionFrontendId: questionFrontendId });
+
+            return question;
+        } else 
+        {
+            const res = await Problem.aggregate([{ $sample: { size: 1 } }]);
+
+            console.log(res);
+        }
         
     } catch(err) {
         console.log(err);
     }
 }
 
-async function getRandomProblemFromUser(id){
+async function getRandomProblemFromUser(user){
     try {
-        const userData = await User.getUserData(id); 
-    
-        const randDiffNum = Math.floor(Math.random()*userData.diffs.length); 
-        const randTagNum = Math.floor(Math.random()*userData.tags.length);
+        // Get a random difficulty 
+        const randomDifficulty = user.diffs[Math.floor(Math.random() * user.diffs.length)]; 
 
-        console.log(userData.diffs[randDiffNum]); 
-        console.log(userData.tags[randTagNum]); 
+        if (user.tags.length > 0) {
+            const randomTag = user.tags[Math.floor(Math.random() * user.tags.length)]; 
 
-        const randDiff = await Difficulty.find({difficulty: userData.diffs[randDiffNum]}); 
-        const randomId = Math.floor(Math.random()*randDiff.tags[userData.tags[randTagNum]].list.length);
+            const problems = await Difficulty.findOne({ difficulty: randomDifficulty }); 
 
-        let output = null;  
+            const temp = problems.tags[tags.get(randomTag)]; 
 
-        randDiff.tags.forEach(async (value)=>{
-            if (value.title == userData.tags[randTagNum]) {
-                const randTemp = Math.floor(Math.random()*value.list.length); 
+            const questionFrontendId = temp.list[Math.floor(Math.random() * temp.list.length)]; 
 
-                output = await Problem.find({questionFrontendId: value.list[randTemp]}); 
-            }
-        }); 
+            const problem = await Problem.findOne({ questionFrontendId: questionFrontendId }); 
 
-        return output; 
+            return problem;
+
+        } else {
+            return await getRandomProblem(randomDifficulty); 
+        }
  
     } catch(err) {
         console.log(err);
@@ -260,5 +257,11 @@ module.exports = {
     update, 
     getRandomProblem,
     getRandomProblemFromUser,
-    Time
+    Monday, 
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
 };

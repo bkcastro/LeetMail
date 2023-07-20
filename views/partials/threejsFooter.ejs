@@ -1,4 +1,5 @@
 
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
   <script>
@@ -10,8 +11,6 @@
     renderer.setSize(200, 200);
     //document.body.appendChild(renderer.domElement);
     document.getElementById('canvas-container').appendChild(renderer.domElement);
-    
-    console.log(document.getElementById('canvas-container'))
 
     const light = new THREE.DirectionalLight(0xffffff, .2);
     light.position.set(1, 1, 1);

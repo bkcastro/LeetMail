@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema({
     schedule: { type: Array, required: true }, 
     diffs: { type: Array, required: true }, 
     tags: { type: Array, required: true }, 
-    time: { type: String, required: true }
 });
 
 module.exports = mongoose.model("User", userSchema); 

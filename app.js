@@ -7,8 +7,7 @@ var passport = require('passport');
 var session = require('express-session'); 
 var flash = require('connect-flash');
 
-
-//const User = require("./myModules/userModule");
+const User = require("./myModules/userModule");
 const Mail = require("./myModules/mailModule");
 const Leet = require("./myModules/leetCodeModule");
 const cronJob = require('./myModules/cronModule');
@@ -23,6 +22,8 @@ const mongoose = require("mongoose");
 const url = process.env.DB_URL;
 
 const app = express(); 
+
+const PORT = process.env.PORT || 3030;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -40,7 +41,6 @@ app.use(passport.authenticate('session'));
 app.use('/', indexRouter);
 app.use('/', authRouter); 
 
-
 const start = async() => {
     try {
 
@@ -52,11 +52,11 @@ const start = async() => {
             useUnifiedTopology: true,
             dbName: "CodeMail",
         });
-        
-        //cronJob();
 
-        app.listen(3000, function() {
-            console.log("Server running on port 3000");
+        cronJob();
+
+        app.listen(PORT, function() {
+            console.log(`Server running on port ${PORT}`);
         });
     }
     catch(e) {

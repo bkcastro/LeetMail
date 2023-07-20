@@ -3,67 +3,50 @@
 <body class="text-center">
 <main class="form-signin w-100 m-auto">
   <div id="canvas-container"></div>
-  <form action="/update"  method="POST">
-    <h1 class="h3 mb-3 fw-normal text-dark">Welcome <span class="text-warning"><%= user.username %></span></h1>
-    <p>Toggle which days you want <b class="text-warning">CodeMail</b> to send you a random <code>LeetCode</code> question. Items with a <span class="strike-through">red</span> line going through them don't work right now Sorry!</p>
+  <form id="form" action="/update"  method="POST">
+    <h1 class="h3 mb-3 fw-normal text-dark">Welcome <b class="text-warning"><%= user.username %></b></h1>
+    <p>Toggle which days you want <b class="text-warning">Leet</b><b class="text-dark">Mail</b> to send you a random <code>LeetCode</code> question.</p>
 
-    <div class="d-flex justify-content-center mb-2">
-      <p class="spaceout p-1 strike-through">Time (PDT):</p>
-      <div class="dropdown">
-        <a id="dropdown" class="btn rounded-pill btn-outline-dark dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <%= time %>
-        </a>
-        <input id="time" name="time" hidden="true" value='<%= time %>'>
-        <ul class="dropdown-menu">
-          <% for (let i=6; i < 12; i++) { %>
-          <li><a class="dropdown-item" onclick="toggleDropdown('<%= i %> am')" ><%= i %> am</a></li>
+    <div class="mb-2">
+      <p>Schedule:</p>
+      <% const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
+      <% for (let i = 0; i < daysOfWeek.length; i++) { %>
+        
+        <% if (scheduleSet.has(daysOfWeek[i])) { %>
+            <input name="days[]" onclick="clicked()" type="checkbox" checked="true" class="btn-check" id="<%= i %>" value="<%= daysOfWeek[i] %>" autocomplete="off">
+          <% } else { %>
+            <input name="days[]" onclick="clicked()" type="checkbox" class="btn-check" id="<%= i %>" value="<%= daysOfWeek[i] %>" autocomplete="off">
           <% } %>
-          <li><a class="dropdown-item" onclick="toggleDropdown('12 pm')" >12 pm</a></li>
-          <% for (let i=1; i < 12; i++) { %>
-            <li><a class="dropdown-item" onclick="toggleDropdown('<%= i %> pm')" ><%= i %> pm</a></li>
-            <% } %>
-            <li><a class="dropdown-item" onclick="toggleDropdown('12 am')" >12 am</a></li>
-        </ul>
-      </div>
+
+          <label id="label+<%= i %>" class="daysOfWeek mb-2 btn btn-outline-warning" for="<%= i %>"><%= daysOfWeek[i] %></label>
+      <% } %>
     </div>
-
-    <% const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
-    <% for (let i = 0; i < daysOfWeek.length; i++) { %>
-      
-      <% if (scheduleSet.has(daysOfWeek[i])) { %>
-          <input name="days" onclick="clicked()" type="checkbox" checked="true" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
-        <% } else { %>
-          <input name="days" onclick="clicked()" type="checkbox" class="btn-check" id="<%= i %>" value="<%= i %>" autocomplete="off">
-        <% } %>
-
-        <label id="label+<%= i %>" class="daysOfWeek mb-2 btn btn-outline-warning" for="<%= i %>"><%= daysOfWeek[i] %></label>
-    <% } %>
-
+    
     <div class="mt-1"> 
       <p>Difficulty:</p>
       <p class="text-danger error"><%=errorMessage%></p>
-      <% const difficultys = ['easy', 'medium', 'hard']; %>
+      <% const difficultys = ['Easy', 'Medium', 'Hard']; %>
       <% const colors = ['success', 'warning', 'danger'] %>
       <% for (let i = 0; i < difficultys.length; i++) { %>
         
         <% if (difficultySet.has(difficultys[i])) { %>
-          <input name="diffs" checked="true" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
+          <input name="diffs[]" checked="true" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= difficultys[i] %>" autocomplete="off">
         <% } else { %>
-          <input name="diffs" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= i %>" autocomplete="off">
+          <input name="diffs[]" onclick="clicked()" type="checkbox" class="diffs btn-check rounded-pill" id="<%= i+7 %>" value="<%= difficultys[i] %>" autocomplete="off">
         <% } %>
         <label class=" mb-3 btn rounded-pill btn-outline-<%= colors[i] %>" for="<%= i+7 %>"><%= difficultys[i] %></label>
       <% } %>
     </div>
 
-    <p class="dropdown-toggle text-center strike-through" onclick="toggleOptions()">More Options</p>
+    <p class="dropdown-toggle text-center" onclick="toggleOptions()">More Options</p>
     <div id="options" hidden="true" class="mb-2">
         <% const tags = [ 'Array', 'Math', 'Sorting', 'Greedy', 'Depth-First Search', 'Database', 'Binary Search', 'Breadth-First Search', 'Tree', 'Matrix'] %> 
         <% for (let i = 0; i < tags.length; i++) { %>   
           
           <% if (tagSet.has(tags[i])) { %>
-            <input name="option" checked="true" onclick="clicked()" type="checkbox" class="btn-check" id="tag+<%= i %>" value="tag+<%= i %>" autocomplete="off">
+            <input name="tags[]" checked="true" onclick="clicked()" type="checkbox" class="btn-check" id="tag+<%= i %>" value="<%= tags[i] %>" autocomplete="off">
           <% } else { %>
-            <input name="option" onclick="clicked()" type="checkbox" class="btn-check" id="tag+<%= i %>" value="tag+<%= i %>" autocomplete="off">
+            <input name="tags[]" onclick="clicked()" type="checkbox" class="btn-check" id="tag+<%= i %>" value="<%= tags[i] %>" autocomplete="off">
           <% } %> 
           <label class=" mb-2 btn rounded-pill btn-outline-success" for="tag+<%= i %>"><%= tags[i] %></label>
         <% } %> 
@@ -75,7 +58,7 @@
   <form class="mt-1" action="/logout" method="POST">
     <button id="singout" class="w-100 btn btn-lg btn-danger" type="submit">Log Out</button>
   </form>
-  <p class="mt-5 mb-3 text-muted">&copy; CodeMail Co</p>
+  <p class="mt-5 text-muted">&copy; LeetMail Co</p>
 
   <script>
 
@@ -107,6 +90,10 @@
     function toggleOptions() {
       document.getElementById("options").toggleAttribute("hidden");
     };
+
+    // document.getElementById('form').addEventListener('submit', function(event) {
+
+    // })
 
   </script>
 
