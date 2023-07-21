@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const https = require('https');
 
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -31,8 +32,24 @@ async function runCron() {
         });
     });
 
-    cron.schedule("*/12 * * * *", () => {
+    cron.schedule("*/10 * * * *", () => {
         console.log("Lets keep render awake!");
+
+        const options = {
+        hostname: 'leetmail.onrender.com',
+        path: '/',
+        method: 'GET',
+        };
+
+        const req = https.request(options, (res) => {
+        res.on('data', () => {});
+        });
+
+        req.on('error', (error) => {
+        console.error('Error:', error.message);
+        });
+
+        req.end();
       });
 }
 

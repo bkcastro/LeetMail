@@ -83,6 +83,7 @@ router.get('/login/email/verify', async function(req, res, next) {
             const tokenPromise = await Token.findByIdAndDelete(token._id); 
 
             // Now just redirect user to login page
+            console.log("User verified");
             return res.redirect('/login');
         } else {
             res.render('error'); 
