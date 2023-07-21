@@ -3,6 +3,8 @@ const nodemailer = require("nodemailer");
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
+const rootURL = process.rootURL
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -13,7 +15,7 @@ const transporter = nodemailer.createTransport({
 
 async function newUser(email, username, token) {
 
-    var link = 'http://localhost:3000/login/email/verify?token=' + token;
+    var link = rootURL+'login/email/verify?token=' + token;
      
     const mailDetails = {
         from: 'LeetMail dave@leetmail.com',
@@ -39,7 +41,7 @@ async function mailLeetCodeQuestion(user, question) {
         to: user.email,
         subject: 'LeetMail: '+question.title+'.',
         text: "",
-        html: '<a href="https://leetcode.com/problems/'+question.titleSlug+'/"><h1>'+question.title+'</h1></a><p>Click on the question above to be re-direct to the leetcode problem. </p><p>Good luck '+user.username+'!</p>',
+        html: '<a href='+rootURL+'problems/'+question.titleSlug+'/"><h1>'+question.title+'</h1></a><p>Click on the question above to be re-direct to the leetcode problem. </p><p>Good luck '+user.username+'!</p>',
     };
      
     transporter.sendMail(mailDetails, function(err, data) {
