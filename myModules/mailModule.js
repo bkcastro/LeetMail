@@ -41,7 +41,7 @@ async function mailLeetCodeQuestion(user, question) {
         to: user.email,
         subject: 'LeetMail: '+question.title+'.',
         text: "",
-        html: '<a href='+rootURL+'problems/'+question.titleSlug+'/"><h1>'+question.title+'</h1></a><p>Click on the question above to be re-direct to the leetcode problem. </p><p>Good luck '+user.username+'!</p>',
+        html: '<a href="https://leetcode.com/problems/'+question.titleSlug+'/"><h1>'+question.title+'</h1></a><p>Click on the question above to be re-direct to the leetcode problem. </p><p>Good luck '+user.username+'!</p>',
     };
      
     transporter.sendMail(mailDetails, function(err, data) {
